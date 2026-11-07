@@ -71,7 +71,7 @@ function showLogin(lastCode = '') {
   if (pilot) setTimeout(() => nick.focus(), 0);
 
   mount(root,
-    h('div', { class: 'center' }, h('h1', {}, 'TEXTOPIA'), h('p', { class: 'muted' }, '책 속 문장을 모아 나만의 조선 마을을 지어요')),
+    h('div', { class: 'center' }, h('h1', {}, 'TEXTOPIA'), h('p', { class: 'muted' }, '책과 문장으로 나의 취향이 담긴 독서마을을 만들어요')),
     h('div', { class: 'card stack' },
       pilot ? null : h('div', {}, h('label', { for: 'code' }, '반 코드'), code),
       h('div', {}, h('label', { for: 'nick' }, '닉네임'), nick),
@@ -110,6 +110,7 @@ function showApp() {
 async function draw(view, nav) {
   const m = location.hash.match(/^#\/([a-z]+)(?:\/([A-Za-z0-9_-]+))?/) || [];
   const tab = TABS.find((t) => t.id === m[1]) || TABS[0];
+  root.classList.toggle('village-wide', tab.id === 'home');
   nav.querySelectorAll('a').forEach((a) => a.classList.toggle('on', a.dataset.tab === tab.id));
   try { await tab.render(view, m[2]); } catch (e) { view.replaceChildren(h('p', { class: 'error' }, e.message)); }
   window.scrollTo(0, 0);
