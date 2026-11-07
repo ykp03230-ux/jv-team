@@ -52,7 +52,29 @@ export async function renderHome(el) {
       h('div', { class: 'row between' }, h('strong', {}, '오늘 받은 코인'), h('span', { id: 'today-coins' }, `${me.todayCoins} / ${me.coinCap}`)),
       h('div', { class: 'bar' }, h('i', { style: `width:${cap}%` })),
     ),
+    recordCard(),
   );
+}
+
+const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+const dayLabel = (date) => `${date.slice(5, 7)}/${date.slice(8, 10)}(${WEEKDAY[new Date(date + 'T00:00:00Z').getUTCDay()]})`;
+
+/** 나의 출석·퀘스트 기록: 최근 14일, 내 것만 보인다 */
+function recordCard() {
+  const box = h('div', { class: 'card stack', style: 'margin-top:12px', id: 'my-record' },
+    h('h3', {}, '나의 출석·퀘스트 기록'), h('p', { class: 'muted' }, '불러오는 중…'));
+  call('daily/me', { days: 14 }).then((r) => {
+    const mark = (on) => h('td', { class: on ? 'yes' : 'no', 'aria-label': on ? '했어요' : '안 했어요' }, on ? '✔' : '–');
+    const attended = r.days.filter((d) => d.seen).length;
+    box.replaceChildren(
+      h('div', { class: 'row between' }, h('h3', {}, '나의 출석·퀘스트 기록'), h('span', { class: 'pill', id: 'record-attend' }, `최근 14일 출석 ${attended}일`)),
+      h('div', { class: 'table-scroll' }, h('table', { class: 'daily-table', id: 'record-table' },
+        h('thead', {}, h('tr', {}, ['날짜', '출석', '①필사', '②읽기', '③방문', '보너스'].map((x) => h('th', {}, x)))),
+        h('tbody', {}, r.days.map((d) => h('tr', { class: d.date === r.today ? 'today' : '', 'data-date': d.date },
+          h('td', {}, dayLabel(d.date) + (d.date === r.today ? ' 오늘' : '')), mark(d.seen), mark(d.sentence), mark(d.read), mark(d.visit), mark(d.bonus)))))),
+    );
+  }).catch((e) => box.replaceChildren(h('h3', {}, '나의 출석·퀘스트 기록'), h('p', { class: 'error' }, e.message)));
+  return box;
 }
 
 function quest(done, title, sub, action) {

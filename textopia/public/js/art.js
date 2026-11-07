@@ -92,11 +92,6 @@ const BUILDINGS = {
     <rect x="30" y="64" width="6" height="40" fill="var(--art-wood)"/><rect x="124" y="64" width="6" height="40" fill="var(--art-wood)"/>
     <rect x="62" y="74" width="36" height="30" fill="var(--art-wood)"/><rect x="56" y="54" width="48" height="14" fill="var(--art-paper)" stroke="var(--color-ink)" stroke-width="1.2"/>
     <text x="80" y="65" text-anchor="middle" font-size="11" font-family="Song Myung, serif" fill="var(--color-ink)">書堂</text>${ROOF(30, 130, 64, false)}`,
-  // 박물관: 기둥이 늘어선 큰 기와집
-  museum: `<rect x="20" y="100" width="120" height="8" fill="var(--art-stone)" stroke="var(--color-ink)" stroke-width="1.3"/>
-    <rect x="28" y="62" width="104" height="38" fill="var(--art-paper)" stroke="var(--color-ink)" stroke-width="1.5"/>
-    ${[34, 58, 82, 106, 126].map((x) => `<rect x="${x - 3}" y="62" width="6" height="38" fill="var(--art-wood)"/>`).join('')}
-    <rect x="68" y="76" width="24" height="24" fill="var(--color-ink)"/>${ROOF(28, 132, 62, true)}`,
   // 장터: 줄무늬 차양을 친 가게 셋
   market: `${[18, 62, 106].map((x, i) => `<g><rect x="${x + 4}" y="74" width="30" height="30" fill="var(--art-earth-dark)" stroke="var(--color-ink)" stroke-width="1.2"/>
       <path d="M${x} 74 L${x + 4} 58 H${x + 34} L${x + 38} 74 Z" fill="${i === 1 ? 'var(--art-paper)' : 'var(--color-accent)'}" stroke="var(--color-ink)" stroke-width="1.3"/>

@@ -1,6 +1,7 @@
 // 사진: 보기(로그인 정보를 붙여 불러오기)와 올리기 전 줄이기
-import { h } from '../ui.js';
+import { h, once } from '../ui.js';
 import { token } from './core.js';
+import { drawingBoard } from './drawing-board.js';
 
 const cache = new Map(); // imgId → 객체 주소
 
@@ -56,14 +57,16 @@ export async function uploadPhoto(blob) {
 }
 
 /**
- * 사진 고르기 칸. 고르면 바로 줄여서 올리고, 올린 사진 id 를 state.imgId 로 알려 준다.
- * 안내 문구: 얼굴과 이름이 나오지 않게 찍어요.
+ * 그림 넣는 칸: ① 사진 올리기 ② 그림판으로 그리기. 어느 쪽이든 줄이거나 JPEG 로 내보내서 같은 길로 올리고,
+ * 올린 그림 id 를 state.imgId 로 알려 준다. (사진 안내문: 얼굴과 이름이 나오지 않게 찍어요.)
  */
 export function photoPicker(onChange) {
   const state = { imgId: null };
-  const input = h('input', { type: 'file', accept: 'image/*', id: 'photo-input', 'aria-label': '사진 고르기' });
   const status = h('p', { class: 'muted', id: 'photo-status', 'aria-live': 'polite' }, '사진을 골라 주세요.');
   const preview = h('div', { id: 'photo-preview' });
+
+  // ① 사진 올리기
+  const input = h('input', { type: 'file', accept: 'image/*', id: 'photo-input', 'aria-label': '사진 고르기' });
   input.addEventListener('change', async () => {
     state.imgId = null; onChange?.(null);
     const file = input.files?.[0];
@@ -79,8 +82,44 @@ export function photoPicker(onChange) {
       onChange?.(up.imgId);
     } catch (e) { status.className = 'error'; status.textContent = e.message; }
   });
-  const el = h('div', { class: 'stack photo-picker' },
-    h('p', { class: 'notice', id: 'photo-notice' }, '📷 얼굴과 이름이 나오지 않게 찍어요'),
-    input, status, preview);
+  const photoPane = h('div', { class: 'stack', id: 'photo-pane' },
+    h('p', { class: 'notice', id: 'photo-notice' }, '📷 얼굴과 이름이 나오지 않게 찍어요'), input);
+
+  // ② 그림판으로 그리기: 그림을 고치면 이미 올린 그림은 무효로 하고 다시 올리게 한다
+  const board = drawingBoard({
+    onDraw: () => {
+      if (!state.imgId) return;
+      state.imgId = null; onChange?.(null); preview.replaceChildren();
+      status.className = 'muted'; status.textContent = '그림을 고쳤어요. 다시 "다 그렸어요"를 눌러 주세요.';
+    },
+  });
+  const done = h('button', { class: 'btn block', id: 'board-done', type: 'button' }, '다 그렸어요 (그림 올리기)');
+  done.addEventListener('click', () => once(done, async () => {
+    if (board.isBlank()) { status.className = 'error'; status.textContent = '먼저 그림을 그려 주세요.'; return; }
+    status.className = 'muted'; status.textContent = '그림을 올리는 중…';
+    try {
+      const blob = await board.toBlob();
+      const up = await uploadPhoto(blob);
+      state.imgId = up.imgId;
+      preview.replaceChildren(h('img', { class: 'photo', alt: '그린 그림', src: URL.createObjectURL(blob) }));
+      status.textContent = `준비됐어요 (그림판 ${up.w}×${up.h}, ${Math.round(blob.size / 1024)}KB)`;
+      onChange?.(up.imgId);
+    } catch (e) { status.className = 'error'; status.textContent = e.message; }
+  }));
+  const boardPane = h('div', { class: 'stack hidden', id: 'board-pane' },
+    h('p', { class: 'notice', id: 'board-notice' }, '✏️ 그림에 이름이 나오지 않게 그려요'), board.el, done);
+
+  // 탭: 사진 올리기 / 그림판으로 그리기
+  const modes = [['photo', '사진 올리기', photoPane], ['board', '그림판으로 그리기', boardPane]];
+  const tabs = h('div', { class: 'tabs', role: 'tablist' }, modes.map(([id, label]) => h('button', {
+    class: 'tab' + (id === 'photo' ? ' on' : ''), type: 'button', role: 'tab', 'data-mode': id,
+    onclick: () => {
+      tabs.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.mode === id));
+      modes.forEach(([m, , pane]) => pane.classList.toggle('hidden', m !== id));
+      if (!state.imgId) { status.className = 'muted'; status.textContent = id === 'photo' ? '사진을 골라 주세요.' : '그림을 그리고 "다 그렸어요"를 눌러요.'; }
+    },
+  }, label)));
+
+  const el = h('div', { class: 'stack photo-picker' }, tabs, photoPane, boardPane, status, preview);
   return { el, state };
 }

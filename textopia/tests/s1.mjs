@@ -18,7 +18,6 @@ export async function run(t) {
 
   const s1 = await seed(cls);
   t.eq('1번째: 학생 20명', s1.students, 20);
-  t.eq('1번째: 박물관 작품 10개', s1.subs, 10);
   t.eq('1번째: 오늘의 문장 7일치', s1.scheduleDays, 7);
   t.eq('1번째: 마을 EXP 290', s1.villageExp, 290);
   t.eq('1번째: 학생이 추가한 책 2권', s1.addedBooks, 2);

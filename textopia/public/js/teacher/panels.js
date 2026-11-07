@@ -1,4 +1,4 @@
-// 교사 화면의 칸들: 읽음 인증, 오늘의 문장, 학생이 추가한 책 (이후 단계에서 박물관 칸이 더해진다)
+// 교사 화면의 칸들: 학생 계정 추가, 읽음 인증, 오늘의 문장, 학생이 추가한 책
 import { api, teacherSession } from '../api.js';
 import { h, toast, once } from '../ui.js';
 
@@ -59,6 +59,47 @@ export function rosterPanel(onChanged) {
     h('p', { class: 'muted' }, '만든 계정의 PIN 은 모두 0000 이에요. 학생은 닉네임만 쓰고 들어와요.'),
     text, add, result, h('hr'), pinBox);
   return box;
+}
+
+// ── 일자별 퀘스트·출석 현황 (학생 전체) ─────────────────────
+const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토'];
+const dayLabel = (date) => `${date.slice(5, 7)}/${date.slice(8, 10)}(${WEEKDAY[new Date(date + 'T00:00:00Z').getUTCDay()]})`;
+let dailyDays = 14;     // 보는 기간(일)
+let dailyDate = null;   // 자세히 볼 날짜 (null 이면 오늘)
+
+export function dailyPanel() {
+  return panel('daily-panel', async (reload) => {
+    const d = await api('teacher/daily', { days: dailyDays }, tok());
+    const date = d.dates.includes(dailyDate) ? dailyDate : d.today;
+    const tot = d.totals.find((x) => x.date === date);
+    const mark = (on) => h('td', { class: on ? 'yes' : 'no', 'aria-label': on ? '했어요' : '안 했어요' }, on ? '✔' : '–');
+
+    const range = h('select', { id: 'daily-range', 'aria-label': '보는 기간' }, [7, 14, 30].map((n) => h('option', { value: String(n), selected: n === dailyDays }, `최근 ${n}일`)));
+    range.addEventListener('change', () => { dailyDays = Number(range.value); reload(); });
+    const pick = h('select', { id: 'daily-date', 'aria-label': '자세히 볼 날짜' }, [...d.dates].reverse().map((x) => h('option', { value: x, selected: x === date }, dayLabel(x) + (x === d.today ? ' 오늘' : ''))));
+    pick.addEventListener('change', () => { dailyDate = pick.value; reload(); });
+
+    const detail = h('table', { class: 'daily-table', id: 'daily-detail' },
+      h('thead', {}, h('tr', {}, ['닉네임', '출석', '①필사', '②읽기', '③친구방문', '보너스'].map((x) => h('th', {}, x)))),
+      h('tbody', {}, d.rows.map((r) => { const s = r.days[date]; return h('tr', { 'data-student': r.id }, h('td', {}, r.nick), mark(s.seen), mark(s.sentence), mark(s.read), mark(s.visit), mark(s.bonus)); })));
+
+    // 기간 한눈에 보기: 칸에는 그날 한 퀘스트 개수(0~3), 보너스는 ★, 입장하지 않은 날은 ·
+    const grid = h('table', { class: 'daily-table grid', id: 'daily-grid' },
+      h('thead', {}, h('tr', {}, h('th', {}, '닉네임'), d.dates.map((x) => h('th', { class: x === date ? 'on' : '' }, dayLabel(x).slice(0, 5))))),
+      h('tbody', {}, d.rows.map((r) => h('tr', {}, h('td', {}, r.nick), d.dates.map((x) => {
+        const s = r.days[x];
+        return h('td', { class: s.seen ? 'seen' : 'none', title: s.seen ? `${s.quests}개${s.bonus ? ' · 보너스' : ''}` : '입장 안 함' }, s.seen ? `${s.quests}${s.bonus ? '★' : ''}` : '·');
+      })))),
+      h('tfoot', {}, h('tr', {}, h('td', {}, '출석'), d.totals.map((x) => h('td', {}, `${x.seen}`)))));
+
+    return [
+      h('h2', {}, '일자별 퀘스트·출석 현황'),
+      h('div', { class: 'row' }, h('div', { class: 'grow' }, h('label', { for: 'daily-date' }, '자세히 볼 날짜'), pick), h('div', { class: 'grow' }, h('label', { for: 'daily-range' }, '한눈에 볼 기간'), range)),
+      h('p', { id: 'daily-summary' }, h('strong', {}, dayLabel(date)), ` · 출석 ${tot.seen}/${tot.students}명 · 필사 ${tot.sentence} · 읽기 ${tot.read} · 친구방문 ${tot.visit} · 보너스 ${tot.bonus}`),
+      d.rows.length ? h('div', { class: 'table-scroll' }, detail) : h('p', { class: 'muted' }, '아직 입장한 학생이 없어요.'),
+      d.rows.length ? h('details', { open: true }, h('summary', {}, `최근 ${dailyDays}일 한눈에 보기 (칸의 숫자 = 그날 한 퀘스트 개수, ★ = 보너스, · = 입장 안 함)`), h('div', { class: 'table-scroll', style: 'margin-top:8px' }, grid)) : null,
+    ].filter(Boolean);
+  });
 }
 
 // ── 읽음 인증 승인/반려 ───────────────────────────────────
@@ -131,52 +172,6 @@ export function sentencePanel() {
           h('p', { class: 'muted' }, '저작권이 끝난 작가의 원문이나, 고전을 쉬운 우리말로 직접 풀어 쓴 문장만 넣어 주세요.'),
           text, source, h('div', {}, h('label', { for: 'new-date' }, '이 날짜에 보여 주기 (비워 두면 목록에만 들어가요)'), date), err, add,
           h('hr'), pool)),
-    ];
-  });
-}
-
-// ── 박물관: 전시 on/off, 투표 열기/마감, 이달 미제출, 작품 숨기기 ─────
-export function museumPanel(onChanged) {
-  const KIND = { sentence: '문장 카드', question: '질문', work: '작품' };
-  const excerpt = (s) => {
-    const t = s.snap.text || s.snap.caption || s.snap.title || '';
-    return t.length > 40 ? t.slice(0, 40) + '…' : t;
-  };
-  return panel('museum-panel', async (reload) => {
-    const d = await api('teacher/museum', {}, tok());
-    const run = (btn, action, body, okMsg) => btn.addEventListener('click', () => once(btn, async () => {
-      try { const r = await api(action, body, tok()); if (okMsg) toast(typeof okMsg === 'function' ? okMsg(r) : okMsg); await reload(); onChanged?.(); } catch (e) { toast(e.message); }
-    }));
-
-    const toggle = h('button', { class: 'btn' + (d.on ? '' : ' ghost'), id: 'museum-toggle' }, d.on ? '전시 켜짐 (끄려면 누르세요)' : '전시 꺼짐 (켜려면 누르세요)');
-    run(toggle, 'teacher/museum/toggle', { on: !d.on }, d.on ? '박물관을 껐어요. 학생 화면에는 ‘준비 중’이 보여요.' : '박물관을 열었어요.');
-
-    const vs = d.vote.status;
-    const voteLabel = { none: '투표 전', open: `투표 중 (${d.vote.voters}명 참여)`, finished: '투표 마감 · 결과 공개' }[vs];
-    const open = h('button', { class: 'btn', id: 'vote-open' }, '투표 열기');
-    run(open, 'teacher/vote/open', {}, '투표를 열었어요.');
-    const close = h('button', { class: 'btn', id: 'vote-close' }, '투표 마감');
-    run(close, 'teacher/vote/close', {}, (r) => `마감했어요. 이달의 작품 ${r.result.length}개`);
-    open.disabled = vs !== 'none';
-    close.disabled = vs !== 'open';
-
-    const best = d.vote.result.map((id) => d.subs.find((s) => s.id === id)).filter(Boolean);
-
-    return [
-      h('h2', {}, `박물관 · ${d.month}`),
-      h('div', { class: 'row' }, toggle),
-      h('div', { class: 'row between' }, h('strong', { id: 'vote-state' }, voteLabel), h('div', { class: 'row' }, open, close)),
-      best.length ? h('div', { class: 'card stack', id: 'vote-result' }, h('h3', {}, '이달의 작품'), best.map((s, i) => h('p', {}, `${i + 1}. ${s.nick} · ${KIND[s.kind]} “${excerpt(s)}” · ${s.tally}표`))) : null,
-      h('div', { class: 'card stack', id: 'missing' },
-        h('h3', {}, `이달 미제출 학생 (${d.missing.length})`),
-        d.missing.length ? h('p', {}, d.missing.map((m) => m.nick).join(', ')) : h('p', { class: 'muted' }, '모두 냈어요!')),
-      h('details', {}, h('summary', {}, `전시 작품 ${d.subs.length}개 · 부적절한 작품 숨기기`),
-        h('div', { class: 'stack', style: 'margin-top:8px' }, d.subs.map((s) => {
-          const hide = h('button', { class: 'btn small ghost', 'data-hide-sub': s.id }, s.hidden ? '다시 보이기' : '숨기기');
-          run(hide, 'teacher/sub/hide', { id: s.id, hidden: !s.hidden });
-          return h('div', { class: 'row between' + (s.hidden ? ' is-hidden' : ''), 'data-sub': s.id },
-            h('div', { class: 'grow' }, h('strong', {}, s.nick), ` · ${s.month} · ${KIND[s.kind]} “${excerpt(s)}”${s.hidden ? ' (숨김)' : ''}`), hide);
-        }))),
     ];
   });
 }

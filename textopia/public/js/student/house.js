@@ -4,7 +4,6 @@ import { houseSVG } from '../art.js';
 import { S, call } from './core.js';
 import { itemEl, itemLabel, coverEl } from './items.js';
 import { itemTools } from './item-tools.js';
-import { submitButton } from './museum.js';
 
 let tab = 'books';
 
@@ -70,12 +69,12 @@ export async function renderHouse(el) {
         b.addEventListener('click', () => once(b, async () => {
           try { lib = (await call('pick/set', { id: isPick ? null : s.id })).library; draw(); } catch (e) { toast(e.message); }
         }));
-        return h('div', { class: 'stack' }, itemEl(s), h('div', { class: 'row' }, b), itemTools(s, reloadLib, [submitButton(s)]));
+        return h('div', { class: 'stack' }, itemEl(s), h('div', { class: 'row' }, b), itemTools(s, reloadLib));
       }));
     }
     const all = [...lib.works, ...lib.questions];
     if (!all.length) return h('p', { class: 'muted' }, '아직 만든 작품이 없어요. 책에서 활동을 해 보세요.');
-    return h('div', { class: 'stack', id: 'work-list' }, all.map((w) => h('div', { class: 'stack' }, h('span', { class: 'pill' }, itemLabel(w)), itemEl(w), itemTools(w, reloadLib, [submitButton(w)]))));
+    return h('div', { class: 'stack', id: 'work-list' }, all.map((w) => h('div', { class: 'stack' }, h('span', { class: 'pill' }, itemLabel(w)), itemEl(w), itemTools(w, reloadLib))));
   }
 
   async function reloadLib() { lib = (await call('library/get')).library; draw(); }

@@ -1,11 +1,10 @@
-// 예시 데이터 다시 채우기: 기존 학생·작품·투표·추가 도서를 지우고 시연용 반을 새로 채운다.
+// 예시 데이터 다시 채우기: 기존 학생·작품·추가 도서를 지우고 시연용 반을 새로 채운다.
 // 같은 id 로 다시 채우므로 몇 번을 눌러도 중복되지 않는다.
 // 반 코드와 교사 비밀번호·교사 로그인은 그대로 둔다.
 import { DEFAULT_SENTENCES, WEEK_ORDER } from '../data/sentences.js';
 import { SHOP_ITEMS } from '../data/rules.js';
 import { addDays } from '../util.js';
 import { blankStudent } from './core.js';
-import { buildSnap, newSub } from './museum.js';
 
 export const DEMO_NICK = '시연';
 export const DEMO_PIN = '0000';
@@ -46,13 +45,6 @@ const QUESTIONS = {
 };
 const DEFAULT_QUESTION = '이 책에서 가장 기억에 남는 장면은 무엇이고, 왜일까?';
 
-// 박물관 작품 10개를 낼 학생 → 종류 (책갈피 5 · 문장 카드 3 · 질문 2)
-const MUSEUM_PLAN = {
-  '소나기': 'bookmark', '몽실이': 'bookmark', '감자': 'bookmark', '포도알': 'bookmark', '꼬마별': 'bookmark',
-  '새벽': 'sentence', '도토리': 'sentence', '구름이': 'sentence',
-  '반딧불': 'question', '무지개': 'question',
-};
-
 // 상점 아이템을 가진 학생 (장터가 열리기 전의 시연용 데이터)
 const OWNED = {
   '포도알': { owned: ['gat'], equipped: { hat: 'gat' } },
@@ -64,19 +56,19 @@ const sentenceById = Object.fromEntries(DEFAULT_SENTENCES.map((s) => [s.id, s]))
 
 /** state 를 시연용 데이터로 바꾼다. ctx: { nowMs, today, month, env, baseBooks, hashPin, randomSalt } */
 export async function seedClass(state, ctx) {
-  const { nowMs, today, month } = ctx;
+  const { nowMs, today } = ctx;
   const DAY = 86400000;
 
-  // 지우기: 학생, 학생 로그인, 투표·작품, 이미지, 학생이 추가한 책, 시험용 날짜
+  // 지우기: 학생, 학생 로그인, 이미지, 학생이 추가한 책, 시험용 날짜 (예전 박물관 자료가 남아 있으면 함께 지운다)
   const teacherSessions = {};
   for (const [h, rec] of Object.entries(state.sessions)) if (rec.role === 'teacher') teacherSessions[h] = rec;
   state.sessions = teacherSessions;
   state.students = {};
   state.images = {};
-  state.museum = { subs: {}, votes: {} };
+  delete state.museum;
+  delete state.meta.museumOn;
   state.village = { exp: 290 };
   state.meta.clock = null;
-  state.meta.museumOn = true;
 
   // 오늘의 문장: 기본 목록 + 오늘부터 7일치 일정
   state.sentences = { pool: DEFAULT_SENTENCES.map((s) => ({ id: s.id, kind: s.kind, source: s.source, text: s.text })), schedule: {} };
@@ -140,6 +132,18 @@ export async function seedClass(state, ctx) {
     }
     const own = OWNED[nick];
     if (own) { st.owned = own.owned; Object.assign(st.equipped, own.equipped); }
+    // 최근 7일 출석·퀘스트 기록 (교사의 일자별 현황을 보여 주기 위한 시연용, 날마다 조금씩 다르게)
+    for (let d = 1; d <= 7; d++) {
+      const date = addDays(today, -d);
+      const sentence = (i + d) % 3 !== 0;
+      const read = (i * 2 + d) % 4 !== 0;
+      const visit = (i + d) % 5 === 0;
+      if (!((i + d) % 7 !== 0 || sentence || read || visit)) continue; // 그날 입장하지 않음
+      st.daily[date] = visit ? { seen: true, visit: true } : { seen: true };
+      if (sentence) st.claims[`sentence:${date}`] = 1;
+      if (read) st.claims[`read:${date}`] = 1;
+      if (sentence && read && visit) st.claims[`bonus:${date}`] = 1;
+    }
     state.students[id] = st;
   }
 
@@ -156,17 +160,11 @@ export async function seedClass(state, ctx) {
   demo.claims['act:b11:sentence'] = 1;
   demo.pickId = 'demo-s1';
   demo.slots[0] = { kind: 'sentence', id: 'demo-s1' };
+  // 시연 계정의 지난 3일: 어제는 필사+읽기, 그제는 필사, 3일 전은 입장만 (오늘은 시연 장면에서 직접 한다)
+  demo.daily[addDays(today, -1)] = { seen: true }; demo.claims[`sentence:${addDays(today, -1)}`] = 1; demo.claims[`read:${addDays(today, -1)}`] = 1;
+  demo.daily[addDays(today, -2)] = { seen: true }; demo.claims[`sentence:${addDays(today, -2)}`] = 1;
+  demo.daily[addDays(today, -3)] = { seen: true };
   state.students[demo.id] = demo;
-
-  // 박물관 작품 10개
-  let n = 0;
-  for (const [nick, kind] of Object.entries(MUSEUM_PLAN)) {
-    const st = state.students[nickToId[nick]];
-    const [k, refId] = kind === 'bookmark' ? ['work', st.works[0].id] : kind === 'sentence' ? ['sentence', st.sentences[0].id] : ['question', st.questions[0].id];
-    const sub = newSub({ id: `sub-${st.id}`, sid: st.id, kind: k, refId, month, at: nowMs - (10 - n) * 3600000, snap: buildSnap(st, k, refId) });
-    state.museum.subs[sub.id] = sub;
-    n++;
-  }
 
   return summarize(state);
 }
@@ -175,7 +173,6 @@ export function summarize(state) {
   const students = Object.values(state.students);
   return {
     students: students.length,
-    subs: Object.keys(state.museum.subs).length,
     scheduleDays: Object.keys(state.sentences.schedule).length,
     addedBooks: Object.keys(state.books.added).length,
     villageExp: state.village.exp,

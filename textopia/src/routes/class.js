@@ -5,6 +5,7 @@ import { DEFAULT_SENTENCES } from '../data/sentences.js';
 import { MAX_STUDENTS } from '../data/rules.js';
 import { blankStudent } from '../engine/core.js';
 import { seedClass } from '../engine/seed.js';
+import { markSeen } from '../engine/daily.js';
 import { studentView, villageView, teacherStudentRow } from '../engine/views.js';
 
 const SESSION_MS = 14 * 24 * 3600 * 1000;
@@ -33,13 +34,12 @@ export const classRoutes = {
     const salt = randomHex(16);
     const code = c.body.code;
     c.doc.init({
-      meta: { code, name, createdAt: c.nowMs, teacher: { salt, hash: await hashPassword(password, salt, c.env) }, clock: null, museumOn: true },
+      meta: { code, name, createdAt: c.nowMs, teacher: { salt, hash: await hashPassword(password, salt, c.env) }, clock: null },
       village: { exp: 0 },
       sessions: {},
       students: {},
       books: { added: {} },
       sentences: { pool: DEFAULT_SENTENCES.map((s) => ({ id: s.id, kind: s.kind, source: s.source, text: s.text })), schedule: {} },
-      museum: { subs: {}, votes: {} },
       images: {},
     });
     c.state = c.doc.state;
@@ -73,6 +73,7 @@ export const classRoutes = {
       c.state.students[st.id] = st;
       created = true;
     }
+    markSeen(st, c.today); // 입장하면 그날 출석
     return { token: await openSession(c, 'student', st.id), created, me: studentView(c, st) };
   } },
 
@@ -83,12 +84,17 @@ export const classRoutes = {
   } },
 
   // 학생 본인 정보 (새로고침해도 로그인이 유지되는지 확인하는 곳)
-  'me': { auth: 'student', run: async (c) => ({ me: studentView(c, c.state.students[c.actor.sid]) }) },
+  // 화면을 열 때마다 불리므로, 로그인을 유지한 채 다음 날 다시 열어도 그날 출석이 남는다
+  'me': { auth: 'student', write: true, run: async (c) => {
+    const st = c.state.students[c.actor.sid];
+    markSeen(st, c.today);
+    return { me: studentView(c, st) };
+  } },
 
   'teacher/overview': { auth: 'teacher', run: async (c) => {
     const { state } = c;
     return {
-      class: { code: state.meta.code, name: state.meta.name, museumOn: state.meta.museumOn, clock: state.meta.clock, today: c.today, month: c.month },
+      class: { code: state.meta.code, name: state.meta.name, clock: state.meta.clock, today: c.today, month: c.month },
       village: villageView(state),
       students: Object.values(state.students).map(teacherStudentRow),
     };

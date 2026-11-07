@@ -1,7 +1,7 @@
 ﻿// 교사 화면
 import { api, ApiFail, teacherSession } from './api.js';
 import { h, mount, toast, once, fmt } from './ui.js';
-import { certPanel, museumPanel, sentencePanel, booksPanel, rosterPanel } from './teacher/panels.js';
+import { certPanel, sentencePanel, booksPanel, rosterPanel, dailyPanel } from './teacher/panels.js';
 import { PILOT } from './config.js';
 
 const root = document.getElementById('app');
@@ -88,7 +88,7 @@ function showDashboard() {
     yes.addEventListener('click', () => once(yes, async () => {
       try {
         const r = await api('teacher/seed', {}, tok());
-        toast(`예시 데이터를 채웠어요 (학생 ${r.summary.students}명, 작품 ${r.summary.subs}개)`);
+        toast(`예시 데이터를 채웠어요 (학생 ${r.summary.students}명)`);
         await refresh();
       } catch (e) { toast(e.message); showSeedButton(); }
     }));
@@ -112,8 +112,8 @@ function showDashboard() {
       h('p', { class: 'muted' }, `오늘 ${ov.class.today} · 마을 EXP ${fmt(ov.village.exp)}`),
     ),
     rosterPanel(refresh),
+    dailyPanel(),
     certPanel(refresh),
-    museumPanel(refresh),
     sentencePanel(),
     booksPanel(),
     h('div', { class: 'card', style: 'margin-top:12px' },

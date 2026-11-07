@@ -3,7 +3,6 @@ import { h, once, toast } from '../ui.js';
 import { S, call, go, toastReward } from './core.js';
 import { coverEl, itemEl, itemLabel, bookmarkEl, TEMPLATES } from './items.js';
 import { itemTools } from './item-tools.js';
-import { submitButton } from './museum.js';
 import { photoPicker } from './images.js';
 
 const CERT_LABEL = { pending: '승인 대기', rejected: '반려됨', approved: '읽음 ✔' };
@@ -113,7 +112,8 @@ async function renderBook(el, bookId) {
   const draw = () => {
     const b = shelf.find((x) => x.id === bookId);
     if (!b) { el.replaceChildren(h('p', { class: 'error' }, '내 책장에 없는 책이에요.'), h('button', { class: 'btn', onclick: () => go('books') }, '책 목록으로')); return; }
-    el.replaceChildren(
+    // 아직 만든 것이 없으면 myItems 는 null 이다. replaceChildren 에 null 을 그대로 넘기면 글자 "null" 이 붙으므로 걸러 낸다.
+    el.replaceChildren(...[
       h('button', { class: 'btn ghost small', onclick: () => go('books') }, '← 책 목록'),
       h('div', { class: 'row', style: 'margin-top:12px; align-items:flex-start' },
         h('div', { style: 'width:96px; flex:0 0 96px' }, coverEl(b, { read: b.cert?.status === 'approved' })),
@@ -122,7 +122,7 @@ async function renderBook(el, bookId) {
       certCard(b),
       activityCard(b),
       myItems(b),
-    );
+    ].filter(Boolean));
   };
 
   // ── 책 활동 ──
@@ -178,7 +178,7 @@ async function renderBook(el, bookId) {
         ? { type: 'drawing', imgId: picker.state.imgId, caption: text.value }
         : { type: 'cover', imgId: picker.state.imgId, title: text.value }));
       return h('div', { class: 'stack' }, mark,
-        h('p', { class: 'muted' }, isDrawing ? '책을 읽고 종이에 그린 그림을 사진으로 찍어 올려요.' : '직접 꾸민 책 표지를 사진으로 찍어 올리고, 내가 붙인 제목을 써요.'),
+        h('p', { class: 'muted' }, isDrawing ? '책을 읽고 종이에 그린 그림을 사진으로 올리거나, 그림판으로 바로 그려요.' : '직접 꾸민 책 표지를 사진으로 올리거나 그림판으로 그리고, 내가 붙인 제목을 써요.'),
         picker.el, text, err, btn);
     }
     // 책갈피: 이 책에서 모은 문장 하나 + 먹 테두리 템플릿 3종
@@ -211,7 +211,7 @@ async function renderBook(el, bookId) {
     if (!items.length) return null;
     return h('div', { class: 'card stack', id: 'my-items' },
       h('h3', {}, '이 책에서 내가 만든 것'),
-      items.map((it) => h('div', { class: 'stack' }, h('span', { class: 'pill' }, itemLabel(it)), itemEl(it), itemTools(it, reload, [submitButton(it)]))));
+      items.map((it) => h('div', { class: 'stack' }, h('span', { class: 'pill' }, itemLabel(it)), itemEl(it), itemTools(it, reload))));
   }
 
   function certCard(b) {

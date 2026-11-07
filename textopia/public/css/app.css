@@ -181,15 +181,29 @@ th { font-family: var(--font-title); font-weight: 400; }
 .shop-item.owned { border-color: var(--color-ink); }
 .num { font-family: var(--font-title); font-size: 26px; line-height: 1.2; }
 
+/* ── 그림판 ── */
+.board-canvas { display: block; width: 100%; aspect-ratio: 4 / 3; background: #fff; border: 2px solid var(--color-ink); border-radius: var(--radius); touch-action: none; cursor: crosshair; -webkit-user-select: none; user-select: none; }
+.swatches { display: flex; flex-wrap: wrap; gap: 8px; }
+.swatch { width: 44px; height: 44px; border: 3px solid var(--color-line); border-radius: 50%; cursor: pointer; padding: 0; }
+.swatch.on { border-color: var(--color-ink); outline: 3px solid var(--color-accent); outline-offset: 1px; }
+
 /* ── 사진 ── */
 .photo { display: block; width: 100%; height: auto; max-height: 320px; object-fit: contain; background: var(--color-bg); border-radius: var(--radius); }
 .mini .photo { max-height: 70px; }
 .notice { margin: 0; padding: var(--space-2) var(--space-3); font-weight: 700; color: var(--color-accent); border: 1.5px solid var(--color-accent); border-radius: var(--radius); background: #fff; }
 .photo-picker input[type="file"] { padding: var(--space-3); height: auto; }
 
-/* ── 박물관 ── */
-.gate-sign { display: inline-block; margin: var(--space-4) 0; padding: var(--space-3) var(--space-5); font-family: var(--font-title); font-size: 34px; color: var(--color-accent); border: 3px double var(--color-accent); border-radius: var(--radius); }
-.card.best { border-color: var(--color-accent); outline: 2px solid var(--color-accent); }
+/* ── 일자별 출석·퀘스트 표 ── */
+.daily-table { font-size: 15px; }
+.daily-table th, .daily-table td { padding: 6px 8px; text-align: center; white-space: nowrap; }
+.daily-table th:first-child, .daily-table td:first-child { text-align: left; }
+.daily-table td.yes { color: var(--color-accent); font-weight: 700; }
+.daily-table td.no { color: var(--color-line); }
+.daily-table tr.today td { background: #FFFDF6; font-weight: 700; }
+.daily-table.grid td.seen { font-weight: 700; }
+.daily-table.grid td.none { color: var(--color-line); }
+.daily-table.grid th.on { color: var(--color-accent); }
+.daily-table.grid tfoot td { border-top: 2px solid var(--color-ink); font-weight: 700; }
 
 /* ── 책 활동 ── */
 .act-tabs .tab { font-size: 15px; padding: 0 4px; }

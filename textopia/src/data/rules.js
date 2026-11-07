@@ -9,7 +9,6 @@ export const REWARDS = {
   questBonus: { coins: 20, exp: 0,  limit: 1 }, // 퀘스트 3개 완료 보너스 — 하루 1회
   cert:       { coins: 30, exp: 30, limit: 1 }, // 읽음 인증(교사 승인 후) — 책당 1회
   activity:   { coins: 15, exp: 15, limit: 1 }, // 독서 활동 5가지 — 책마다 활동별 1회
-  monthlyBest:{ coins: 50, exp: 0,  limit: 1 }, // 이달의 작품 — 월 1회 (하루 코인 상한 제외)
 };
 export const DAILY_COIN_CAP = 100;
 
@@ -24,7 +23,6 @@ export const STAGES = [
 // ── 마을 건물 (마을 EXP = 반 학생들이 얻은 EXP의 합) ─────────
 export const BUILDINGS = [
   { id: 'seodang',  name: '서당',   at: 0,    note: '오늘의 문장' },
-  { id: 'museum',   name: '박물관', at: 0,    note: '작품 전시와 투표' },
   { id: 'market',   name: '장터',   at: 300,  note: '외형 상점이 열려요' },
   { id: 'pavilion', name: '정자',   at: 800,  note: '' },
   { id: 'pond',     name: '연못',   at: 1500, note: '' },

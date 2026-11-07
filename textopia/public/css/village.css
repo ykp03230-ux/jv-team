@@ -15,7 +15,7 @@ body.tv { height: 100vh; overflow: hidden; font-size: clamp(16px, 1.3vw, 34px); 
 .v-tick.on { color: var(--color-accent); font-weight: 700; }
 .v-tick::before { content: ''; position: absolute; left: 50%; top: -0.6vw; height: 0.9vw; border-left: 3px solid var(--color-ink); transform: translateX(-50%); }
 
-.v-buildings { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1vw; height: 22vh; }
+.v-buildings { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1vw; height: 22vh; }
 .v-building { display: flex; flex-direction: column; text-align: center; min-height: 0; }
 .v-building > div:first-child { flex: 1; min-height: 0; }
 .v-building svg { width: 100%; height: 100%; }

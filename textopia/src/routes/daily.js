@@ -3,7 +3,7 @@ import { fail, text, int, newId, isDate, addDays } from '../util.js';
 import { REWARDS } from '../data/rules.js';
 import { grant, mergeEvents, actorStudent, stageOf } from '../engine/core.js';
 import { normalize, diffMarks } from '../engine/text.js';
-import { sentenceFor, maybeBonus, dayRecord } from '../engine/daily.js';
+import { sentenceFor, maybeBonus, dayRecord, markSeen, markVisit } from '../engine/daily.js';
 import { findBook } from '../engine/books.js';
 import { studentView } from '../engine/views.js';
 
@@ -16,6 +16,7 @@ export const dailyRoutes = {
     const want = normalize(target.text);
     const got = normalize(typed);
     const marks = diffMarks(want, got);
+    markSeen(st, c.today);
     if (want !== got) return { match: false, marks, reward: null, me: studentView(c, st) };
 
     const ev = grant(c.state, st, c, { key: `sentence:${c.today}`, rule: REWARDS.sentence, note: '오늘의 문장 필사' });
@@ -30,6 +31,7 @@ export const dailyRoutes = {
     const book = findBook(c, c.body.bookId);
     if (!book || (book.hidden && !st.shelf.includes(book.id))) fail(404, 'no_book', '책을 찾을 수 없어요.');
     const day = dayRecord(st, c.today);
+    markSeen(st, c.today);
     if (day.read) return { already: true, reward: null, me: studentView(c, st) };
     day.read = { bookId: book.id, pages };
     const ev = grant(c.state, st, c, { key: `read:${c.today}`, rule: REWARDS.readCheck, note: '책 읽기 체크' });
@@ -55,6 +57,7 @@ export const dailyRoutes = {
     const day = dayRecord(st, c.today);
     const first = !day.visit;
     if (first) day.visit = friend.id;
+    markVisit(st, c.today);
     const bonus = first ? maybeBonus(c, st) : null;
     return { first, reward: mergeEvents([bonus]), bonus: !!bonus?.granted, me: studentView(c, st) };
   } },

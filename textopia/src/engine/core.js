@@ -29,6 +29,7 @@ export function blankStudent({ id, nick, pin, createdAt, virtual = false }) {
     claims: {},            // 보상 key → 받은 횟수
     dayCoins: {},          // 날짜 → 그날 받은 코인
     days: {},              // 날짜 → { read:{bookId,pages}, visit:친구id }
+    daily: {},             // 날짜 → { seen:출석, visit:친구 방문 } (일자별 출석 현황용)
     ledger: [],            // 최근 보상 기록
     shelf: [],             // 등록한 책 id
     certs: {},             // 책 id → 읽음 인증

@@ -9,7 +9,7 @@ export async function run(t) {
   const v0 = await call('village/get', {}, A.teacher);
   t.eq('시작: 마을 EXP 290', v0.village.exp, 290);
   const open0 = v0.village.buildings.filter((b) => b.unlocked).map((b) => b.name);
-  t.eq('기본 건물은 서당·박물관뿐(장터는 아직 잠김)', open0, ['서당', '박물관']);
+  t.eq('기본 건물은 서당뿐(박물관은 삭제됨, 장터는 아직 잠김)', open0, ['서당']);
   t.eq('잠긴 건물의 해금 EXP: 장터 300, 정자 800, 연못 1500, 서원 3000', v0.village.buildings.filter((b) => !b.unlocked).map((b) => [b.name, b.at]), [['장터', 300], ['정자', 800], ['연못', 1500], ['서원', 3000]]);
   t.eq('다음 건물은 장터(300)', v0.village.next, { name: '장터', at: 300 });
   t.eq('학생 집 20채', v0.houses.length, 20);

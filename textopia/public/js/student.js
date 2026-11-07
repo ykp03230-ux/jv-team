@@ -2,13 +2,12 @@
 import { api, ApiFail, studentSession } from './api.js';
 import { PILOT } from './config.js';
 import { h, mount, toast, once, fmt } from './ui.js';
-import { S, call } from './student/core.js';
+import { S } from './student/core.js';
 import { renderHome } from './student/home.js';
 import { renderDang } from './student/dang.js';
 import { renderFriends } from './student/friends.js';
 import { renderHouse } from './student/house.js';
 import { renderBooks } from './student/books.js';
-import { renderMuseum } from './student/museum.js';
 import { renderShop } from './student/shop.js';
 import { imgEl } from './student/images.js';
 import { setImageRenderer } from './student/items.js';
@@ -24,7 +23,6 @@ const TABS = [
   { id: 'books', label: '책', icon: '📚', render: renderBooks },
   { id: 'house', label: '내 집', icon: '🏠', render: renderHouse },
   { id: 'friends', label: '친구', icon: '🧑‍🤝‍🧑', render: renderFriends },
-  { id: 'museum', label: '박물관', icon: '🏛️', render: renderMuseum },
   { id: 'shop', label: '장터', icon: '🏮', render: renderShop, hidden: true }, // 아래 탭에는 없고 홈·내 집에서 들어간다
 ];
 
@@ -88,15 +86,16 @@ function showApp() {
   const chips = h('div', { class: 'row chips' },
     h('span', { class: 'chip', title: '코인' }, '🪙 ', h('b', { id: 'coins-chip' }, fmt(S.me.coins))),
     h('span', { class: 'chip', title: 'EXP' }, '✨ ', h('b', { id: 'exp-chip' }, fmt(S.me.exp))));
-  const out = h('button', { class: 'btn ghost small', id: 'logout' }, '나가기');
-  out.addEventListener('click', () => once(out, async () => {
-    try { await call('logout'); } catch { /* 이미 만료됨 */ }
-    studentSession.clear(); S.me = null; location.hash = ''; showLogin();
-  }));
+  // 나가기(로그아웃) 대신 '홈으로': 닉네임 입력 화면으로 나가지 않고 메인(홈) 화면으로 돌아온다
+  const homeBtn = h('button', { class: 'btn ghost', id: 'go-home', type: 'button' }, '홈으로');
+  homeBtn.addEventListener('click', () => {
+    if (location.hash === '#/home') draw(view, nav); // 이미 홈이면 다시 그려서 맨 위로
+    else location.hash = '#/home';
+  });
   const view = h('div', { id: 'view', class: 'stack' });
   const nav = h('nav', { class: 'tabbar', 'aria-label': '메뉴' }, TABS.filter((t) => !t.hidden).map((t) =>
     h('a', { href: '#/' + t.id, 'data-tab': t.id }, h('span', { class: 'ico', 'aria-hidden': 'true' }, t.icon), h('span', {}, t.label))));
-  mount(root, h('div', { class: 'row between topbar' }, chips, out), view, nav);
+  mount(root, h('div', { class: 'row between topbar' }, chips, homeBtn), view, nav);
 
   window.onhashchange = () => draw(view, nav);
   window.addEventListener('me-updated', () => {

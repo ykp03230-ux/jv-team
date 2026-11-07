@@ -2,7 +2,7 @@ import { call, newClass, seed, student, BASE } from './lib.mjs';
 
 export const num = 11;
 export const title = '(추가) 9단계 사진 업로드 · 전시 아이템';
-export const method = 'JPEG만·긴 변 1024px·1MB 이하를 서버에서 검사, 같은 반만 열람, 그림 독서록·책 표지 보상(+15), 사진 재사용 불가, 박물관에 낸 사진 보기';
+export const method = 'JPEG만·긴 변 1024px·1MB 이하를 서버에서 검사, 같은 반만 열람, 그림 독서록·책 표지 보상(+15), 사진 재사용 불가';
 
 // 서버가 확인하는 만큼만 갖춘 JPEG (SOI + SOF0 + 주석 채우기 + EOI)
 function fakeJpeg(w, h, totalBytes = 0) {
@@ -86,15 +86,11 @@ export async function run(t) {
   const dr2 = await call('activity/submit', { bookId: 'b01', type: 'drawing', imgId: up3.imgId, caption: '두 번째 그림' }, s.token);
   t.check('같은 책의 그림 독서록을 또 올려도 작품은 쌓이고 보상은 없다', dr2.ok && !dr2.rewarded && dr2.me.coins === 30, JSON.stringify(dr2.reward));
 
-  // ── 내 집·박물관에서 쓰기 ──
+  // ── 내 집에서 쓰기 ──
   const lib = (await call('library/get', {}, s.token)).library;
   t.check('도감(만든 작품)에 그림 독서록·책 표지가 imgId 와 함께 보인다', lib.works.filter((w) => w.imgId).length === 3, JSON.stringify(lib.works.map((w) => w.type)));
   const hang = await call('slot/set', { index: 1, kind: 'work', id: dr.item.id }, s.token);
   t.eq('전시 칸에 사진 작품을 걸 수 있다', hang.library.slots[1]?.imgId, up.imgId);
-  const sub = await call('museum/submit', { kind: 'work', refId: dr.item.id }, s.token);
-  t.check('박물관에 내면 사진 id 가 함께 전시된다', sub.ok && sub.sub.snap.imgId === up.imgId && sub.sub.snap.caption, JSON.stringify(sub.sub?.snap));
-  const gallery = (await call('museum/list', {}, friend.token)).subs.find((x) => x.id === sub.sub.id);
-  t.check('친구가 박물관에서 그 사진을 볼 수 있다', gallery && (await get(friend.token, gallery.snap.imgId)).status === 200, '');
   const ed = await call('item/edit', { kind: 'work', id: dr.item.id, caption: '고친 설명' }, s.token);
   t.eq('내 그림 독서록 설명을 고칠 수 있다', ed.library.works.find((w) => w.id === dr.item.id).caption, '고친 설명');
   t.eq('친구는 내 그림 설명을 고칠 수 없다(404)', (await call('item/edit', { kind: 'work', id: dr.item.id, caption: '장난' }, friend.token)).status, 404);
