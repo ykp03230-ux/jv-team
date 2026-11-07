@@ -1,5 +1,5 @@
 // 반 만들기, 로그인(교사·학생), 내 정보, 교사 현황, 예시 데이터 다시 채우기
-import { fail, text, nickKey, randomHex, isDate } from '../util.js';
+import { fail, text, nickKey, randomHex, isDate, isClassCode } from '../util.js';
 import { sha256Hex, hashPin, hashPassword, safeEqual } from '../crypto.js';
 import { DEFAULT_SENTENCES } from '../data/sentences.js';
 import { MAX_STUDENTS } from '../data/rules.js';
@@ -26,6 +26,7 @@ async function openSession(c, role, sid) {
 export const classRoutes = {
   // 교사가 반을 만든다. 반 코드는 서버가 정한다. 비밀번호는 해시로만 저장한다.
   'class/create': { auth: 'none', write: true, run: async (c) => {
+    if (!isClassCode(c.body.code)) fail(400, 'bad_code', '반 코드는 영어 대문자와 숫자 4~10자로 정해 주세요.');
     if (c.state) fail(409, 'exists', '이미 있는 코드예요.');
     const password = text(c.body.password, { name: '비밀번호', min: 6, max: 100 });
     const name = c.body.name ? text(c.body.name, { name: '반 이름', min: 1, max: 30 }) : '우리 반';

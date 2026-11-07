@@ -52,4 +52,5 @@ export const DEFAULT_OUTFIT = 'hb-white'; // 기본 흰 한복 (무료)
 export const MARKET_UNLOCK_EXP = 300;
 export const SLOT_COUNT = 6;          // 집 안 전시 칸
 export const MAX_STUDENTS = 60;       // 한 반 안전 상한 (기준은 20명)
+export const DEFAULT_PIN = '0000';    // 교사가 만든 학생 계정의 PIN, '모두 0000으로 통일' 버튼이 맞추는 값
 export const DAILY_BOOK_ADDS = 3;     // 학생 한 명이 하루에 추가할 수 있는 책

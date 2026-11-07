@@ -7,7 +7,7 @@ import { sha256Hex } from './crypto.js';
 import { loadBaseBooks } from './data/catalog.js';
 import { routes } from './routes/index.js';
 
-const TOKEN_RE = /^Bearer ([A-HJKMNP-Z2-9]{6})\.([0-9a-f]{48})$/;
+const TOKEN_RE = /^Bearer ([A-Z0-9]{4,10})\.([0-9a-f]{48})$/;
 
 export class Classroom extends DurableObject {
   constructor(ctx, env) {

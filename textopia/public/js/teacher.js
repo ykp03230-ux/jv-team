@@ -1,7 +1,8 @@
 ﻿// 교사 화면
 import { api, ApiFail, teacherSession } from './api.js';
 import { h, mount, toast, once, fmt } from './ui.js';
-import { certPanel, museumPanel, sentencePanel, booksPanel } from './teacher/panels.js';
+import { certPanel, museumPanel, sentencePanel, booksPanel, rosterPanel } from './teacher/panels.js';
+import { PILOT } from './config.js';
 
 const root = document.getElementById('app');
 let ov = null;
@@ -26,19 +27,20 @@ async function refresh() {
 // ── 반 만들기 / 교사 로그인 ───────────────────────────────
 function showEntry() {
   const name = h('input', { id: 'class-name', placeholder: '예: 5학년 3반', maxlength: '30' });
+  const newCode = h('input', { id: 'new-code', value: PILOT.classCode || '', placeholder: '비워 두면 자동', maxlength: '10', autocapitalize: 'characters', autocomplete: 'off' });
   const pw1 = h('input', { id: 'new-pw', type: 'password', placeholder: '6자 이상', autocomplete: 'new-password' });
   const err1 = h('div', { class: 'error', role: 'alert' });
   const create = h('button', { class: 'btn block', id: 'create' }, '반 만들기');
   create.addEventListener('click', () => once(create, async () => {
     err1.textContent = '';
     try {
-      const r = await api('class/create', { name: name.value, password: pw1.value });
+      const r = await api('class/create', { name: name.value, password: pw1.value, code: newCode.value });
       teacherSession.set({ code: r.code, token: r.token });
       await refresh();
     } catch (e) { err1.textContent = e.message; }
   }));
 
-  const code = h('input', { id: 'login-code', placeholder: '반 코드', maxlength: '6', autocapitalize: 'characters', value: teacherSession.get()?.code || '' });
+  const code = h('input', { id: 'login-code', placeholder: '반 코드', maxlength: '10', autocapitalize: 'characters', value: teacherSession.get()?.code || PILOT.classCode || '' });
   const pw2 = h('input', { id: 'login-pw', type: 'password', placeholder: '비밀번호', autocomplete: 'current-password' });
   const err2 = h('div', { class: 'error', role: 'alert' });
   const login = h('button', { class: 'btn block ghost', id: 'login' }, '로그인');
@@ -57,6 +59,7 @@ function showEntry() {
       h('div', { class: 'card stack grow' },
         h('h2', {}, '새 반 만들기'),
         h('div', {}, h('label', { for: 'class-name' }, '반 이름'), name),
+        h('div', {}, h('label', { for: 'new-code' }, '반 코드 (영어 대문자·숫자 4~10자, 쉬운 것으로)'), newCode),
         h('div', {}, h('label', { for: 'new-pw' }, '선생님 비밀번호 (처음 한 번만 정해요)'), pw1),
         err1, create),
       h('div', { class: 'card stack grow' },
@@ -108,6 +111,7 @@ function showDashboard() {
       h('a', { class: 'btn ghost', id: 'open-village', href: '/village.html', target: '_blank', rel: 'noopener' }, '마을 화면 열기 (TV용)'),
       h('p', { class: 'muted' }, `오늘 ${ov.class.today} · 마을 EXP ${fmt(ov.village.exp)}`),
     ),
+    rosterPanel(refresh),
     certPanel(refresh),
     museumPanel(refresh),
     sentencePanel(),

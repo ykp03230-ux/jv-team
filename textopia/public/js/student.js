@@ -1,5 +1,6 @@
 // 학생 화면: 입장 → 홈/서당/친구 … (화면 이동은 주소의 # 뒷부분으로)
 import { api, ApiFail, studentSession } from './api.js';
+import { PILOT } from './config.js';
 import { h, mount, toast, once, fmt } from './ui.js';
 import { S, call } from './student/core.js';
 import { renderHome } from './student/home.js';
@@ -46,7 +47,9 @@ async function boot() {
 // ── 입장 ─────────────────────────────────────────────────
 function showLogin(lastCode = '') {
   document.body.classList.remove('in-app');
-  const code = h('input', { id: 'code', value: lastCode || '', placeholder: '선생님이 알려 준 코드', autocapitalize: 'characters', autocomplete: 'off', maxlength: '6' });
+  // 파일럿: 반 코드와 PIN 은 config.js 의 값으로 자동 입력하고 칸을 보이지 않는다
+  const pilot = !!PILOT.classCode;
+  const code = h('input', { id: 'code', value: lastCode || '', placeholder: '선생님이 알려 준 코드', autocapitalize: 'characters', autocomplete: 'off', maxlength: '10' });
   const nick = h('input', { id: 'nick', placeholder: '별명 (실명은 쓰지 않아요)', maxlength: '10', autocomplete: 'off' });
   const pin = h('input', { id: 'pin', placeholder: '숫자 4자리', inputmode: 'numeric', pattern: '[0-9]*', maxlength: '4', type: 'password', autocomplete: 'off' });
   const err = h('div', { class: 'error', role: 'alert' });
@@ -55,8 +58,9 @@ function showLogin(lastCode = '') {
   go.addEventListener('click', () => once(go, async () => {
     err.textContent = '';
     try {
-      const r = await api('student/join', { code: code.value, nick: nick.value, pin: pin.value });
-      studentSession.set({ code: code.value.trim().toUpperCase(), token: r.token, nick: nick.value.trim() });
+      const sendCode = pilot ? PILOT.classCode : code.value;
+      const r = await api('student/join', { code: sendCode, nick: nick.value, pin: pilot ? PILOT.pin : pin.value });
+      studentSession.set({ code: sendCode.trim().toUpperCase(), token: r.token, nick: nick.value.trim() });
       S.me = r.me;
       location.hash = '#/home';
       showApp();
@@ -64,13 +68,14 @@ function showLogin(lastCode = '') {
     } catch (e) { err.textContent = e.message; }
   }));
   [code, nick, pin].forEach((i) => i.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') go.click(); }));
+  if (pilot) setTimeout(() => nick.focus(), 0);
 
   mount(root,
     h('div', { class: 'center' }, h('h1', {}, 'TEXTOPIA'), h('p', { class: 'muted' }, '책 속 문장을 모아 나만의 조선 마을을 지어요')),
     h('div', { class: 'card stack' },
-      h('div', {}, h('label', { for: 'code' }, '반 코드'), code),
+      pilot ? null : h('div', {}, h('label', { for: 'code' }, '반 코드'), code),
       h('div', {}, h('label', { for: 'nick' }, '닉네임'), nick),
-      h('div', {}, h('label', { for: 'pin' }, 'PIN 4자리'), pin),
+      pilot ? null : h('div', {}, h('label', { for: 'pin' }, 'PIN 4자리'), pin),
       err, go,
       h('p', { class: 'muted' }, '처음 쓰는 닉네임이면 새로 만들어져요. 이름·학번·전화번호는 쓰지 않아요.'),
     ),

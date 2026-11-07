@@ -1,11 +1,11 @@
 // 입구: /api/* 요청을 반 코드에 맞는 Durable Object(반마다 하나)로 보낸다.
 // 정적 화면(public/)은 Cloudflare 가 알아서 내려 준다 (wrangler.jsonc 의 assets 설정).
 import { Classroom } from './classroom.js';
-import { newClassCode, isClassCode, json } from './util.js';
+import { newClassCode, isClassCode, normalizeCode, json } from './util.js';
 
 export { Classroom };
 
-const TOKEN_RE = /^Bearer ([A-HJKMNP-Z2-9]{6})\.[0-9a-f]{48}$/;
+const TOKEN_RE = /^Bearer ([A-Z0-9]{4,10})\.[0-9a-f]{48}$/;
 const MAX_BODY = 1_500_000; // 이미지(1MB) + 여유
 const PUBLIC_ACTIONS = new Set(['student/join', 'teacher/login']);
 
@@ -31,6 +31,16 @@ export default {
     if (action === 'class/create') {
       let body;
       try { body = JSON.parse(new TextDecoder().decode(raw)); } catch { return json({ ok: false, error: 'bad_input', message: '요청을 읽을 수 없어요.' }, 400); }
+      // 교사가 쉬운 코드를 직접 정한 경우: 그 코드로만 한 번 시도한다 (이미 있으면 알려 준다)
+      if (body.code != null && String(body.code).trim() !== '') {
+        const wanted = normalizeCode(body.code);
+        if (!isClassCode(wanted)) return json({ ok: false, error: 'bad_code', message: '반 코드는 영어 대문자와 숫자 4~10자로 정해 주세요.' }, 400);
+        const res = await stubFor(env, wanted).fetch(new Request(url, {
+          method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ ...body, code: wanted }),
+        }));
+        if (res.status === 409) return json({ ok: false, error: 'code_taken', message: '이미 쓰고 있는 반 코드예요. 다른 코드를 정해 주세요.' }, 409);
+        return res;
+      }
       for (let i = 0; i < 6; i++) {
         const code = newClassCode();
         const res = await stubFor(env, code).fetch(new Request(url, {

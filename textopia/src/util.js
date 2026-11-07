@@ -38,7 +38,9 @@ export function newClassCode() {
   const bytes = crypto.getRandomValues(new Uint8Array(6));
   return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
 }
-export const isClassCode = (s) => typeof s === 'string' && /^[A-HJKMNP-Z2-9]{6}$/.test(s);
+// 반 코드: 자동으로 만든 6자리, 또는 교사가 직접 정한 쉬운 코드(영어 대문자·숫자 4~10자)
+export const isClassCode = (s) => typeof s === 'string' && /^[A-Z0-9]{4,10}$/.test(s);
+export const normalizeCode = (s) => String(s ?? '').toUpperCase().replace(/\s/g, '');
 
 // ── 입력 검증 ─────────────────────────────────────────────
 export function text(v, { name, min = 1, max = 200 }) {

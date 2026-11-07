@@ -13,6 +13,54 @@ function panel(id, build) {
   return box;
 }
 
+// ── 학생 계정 추가 (PIN 은 모두 0000) ──────────────────────
+let lastRoster = null; // 추가 결과: 대시보드를 새로 그려도 메시지가 남게 한다
+
+export function rosterPanel(onChanged) {
+  const box = h('div', { class: 'card stack', style: 'margin-top:12px', id: 'roster-panel' });
+  const text = h('textarea', { id: 'roster-nicks', rows: '5', placeholder: '닉네임을 한 줄에 한 명씩 써 주세요\n예)\n다온\n하람\n별이' });
+  const result = h('div', { class: 'stack', id: 'roster-result', 'aria-live': 'polite' });
+  const show = (r) => result.replaceChildren(
+    h('p', { class: 'ok', id: 'roster-added' }, `${r.added.length}명을 추가했어요. (전체 ${r.total}명, PIN 은 모두 0000)`),
+    r.skipped.length ? h('p', { class: 'error', id: 'roster-skipped' }, '건너뛴 닉네임: ' + r.skipped.map((s) => `${s.nick} (${s.reason})`).join(', ')) : null);
+  if (lastRoster) { show(lastRoster); lastRoster = null; }
+  const add = h('button', { class: 'btn', id: 'roster-add' }, '학생 계정 추가');
+  add.addEventListener('click', () => once(add, async () => {
+    result.replaceChildren();
+    try {
+      const r = await api('teacher/students/add', { nicks: text.value }, tok());
+      text.value = '';
+      lastRoster = r;
+      show(r);
+      onChanged?.(); // 아래 학생 목록을 새로 그린다 (위 메시지는 lastRoster 로 다시 보여 준다)
+    } catch (e) { result.replaceChildren(h('p', { class: 'error' }, e.message)); }
+  }));
+
+  // 모든 학생 PIN 을 0000 으로 맞추기 (한 번 더 눌러 확인)
+  const pinBox = h('div', { class: 'row' });
+  const showPinButton = () => {
+    const b = h('button', { class: 'btn ghost small', id: 'roster-pin' }, '모든 학생 PIN 을 0000 으로 통일');
+    b.addEventListener('click', showPinConfirm);
+    pinBox.replaceChildren(b);
+  };
+  const showPinConfirm = () => {
+    const yes = h('button', { class: 'btn small', id: 'roster-pin-confirm' }, '네, 모두 0000 으로');
+    const no = h('button', { class: 'btn ghost small', onclick: showPinButton }, '취소');
+    yes.addEventListener('click', () => once(yes, async () => {
+      try { const r = await api('teacher/students/reset-pin', {}, tok()); toast(`${r.count}명의 PIN 을 0000 으로 맞췄어요`); } catch (e) { toast(e.message); }
+      showPinButton();
+    }));
+    pinBox.replaceChildren(h('span', { class: 'grow' }, '학생이 정했던 PIN 이 모두 사라져요.'), yes, no);
+  };
+  showPinButton();
+
+  box.replaceChildren(
+    h('h2', {}, '학생 계정 추가'),
+    h('p', { class: 'muted' }, '만든 계정의 PIN 은 모두 0000 이에요. 학생은 닉네임만 쓰고 들어와요.'),
+    text, add, result, h('hr'), pinBox);
+  return box;
+}
+
 // ── 읽음 인증 승인/반려 ───────────────────────────────────
 export function certPanel(onChanged) {
   return panel('cert-panel', async (reload) => {
