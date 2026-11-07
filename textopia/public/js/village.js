@@ -3,6 +3,7 @@
 import { api, teacherSession, studentSession } from './api.js';
 import { h, mount, once, fmt } from './ui.js';
 import { houseSVG, buildingSVG } from './art.js';
+import { itemEl, setImageRenderer } from './student/items.js';
 
 export const REFRESH_MS = 10000; // 10초
 const root = document.getElementById('app');
@@ -25,6 +26,7 @@ async function tick() {
     detectChanges(d);
     render(d);
     prev = d;
+    loadRoom(); // 집을 열어 보고 있으면 그 집도 같이 새로고침
     document.getElementById('v-updated') && (document.getElementById('v-updated').textContent = `마지막 확인 ${new Date().toLocaleTimeString('ko-KR')}`);
   } catch (e) {
     if (e.status === 401) { teacherSession.clear(); studentSession.clear(); return showLogin(); }
@@ -41,6 +43,7 @@ function start() {
 
 function showLogin() {
   clearInterval(timer);
+  closeRoom();
   const code = h('input', { id: 'v-code', placeholder: '반 코드', maxlength: '6', autocapitalize: 'characters' });
   const pw = h('input', { id: 'v-pw', type: 'password', placeholder: '선생님 비밀번호' });
   const err = h('div', { class: 'error' });
@@ -108,10 +111,108 @@ function render(d) {
         h('div', { class: 'name' }, b.name),
         h('div', { class: 'req' }, b.unlocked ? b.note : `🔒 EXP ${fmt(b.at)}에 열려요`)))),
     h('div', { class: 'v-houses', id: 'v-houses', style: `--rows:${Math.max(1, Math.ceil(d.houses.length / 5))}` }, d.houses.map((x) =>
-      h('div', { class: 'v-house' + (grewHouse.has(x.id) ? ' up' : ''), 'data-house': x.id, 'data-stage': x.stage.key },
+      h('div', { class: 'v-house' + (grewHouse.has(x.id) ? ' up' : ''), 'data-house': x.id, 'data-stage': x.stage.key, role: 'button', tabindex: '0', 'aria-label': `${x.nick}의 집 구경하기` },
         h('div', { html: houseSVG(x.stage.key, x.equipped) }),
         h('div', { class: 'nick' }, x.nick)))),
-    h('div', { class: 'v-foot' }, h('span', {}, '10초마다 새로고침돼요'), h('span', { id: 'v-updated' }, ''))));
+    h('div', { class: 'v-foot' }, h('span', {}, '10초마다 새로고침돼요 · 집을 누르면 구경할 수 있어요'), h('span', { id: 'v-updated' }, ''))));
 }
+
+// ── 학생 집 구경: 집을 누르면 그 집의 모습·pick 문장·전시 칸을 크게 보여 준다(보기만, 기록은 바뀌지 않는다) ──
+// 창은 #app 바깥(body)에 두어서 10초마다 화면이 새로 그려져도 닫히지 않는다.
+const imgCache = new Map(); // 사진 id → 객체 주소
+function loadImg(id) {
+  if (imgCache.has(id)) return imgCache.get(id);
+  const p = fetch('/api/img/' + encodeURIComponent(id), { headers: { authorization: 'Bearer ' + savedToken() } })
+    .then((r) => { if (!r.ok) throw new Error('사진을 불러오지 못했어요'); return r.blob(); })
+    .then((b) => URL.createObjectURL(b));
+  imgCache.set(id, p);
+  p.catch(() => imgCache.delete(id));
+  return p;
+}
+setImageRenderer((id, alt) => { // 그림 독서록·책 표지의 사진 (교사 또는 학생 로그인 정보를 붙여 불러온다)
+  const img = h('img', { class: 'photo', alt: alt || '사진', decoding: 'async', 'data-img': id });
+  loadImg(id).then((url) => { img.src = url; }).catch(() => img.replaceWith(h('div', { class: 'img-todo' }, '사진을 불러오지 못했어요')));
+  return img;
+});
+
+let roomEl = null;
+let roomId = null;
+let roomSig = '';
+
+function closeRoom() {
+  roomEl?.remove();
+  roomEl = null; roomId = null; roomSig = '';
+}
+
+function roomMessage(text) {
+  roomEl?.replaceChildren(h('div', { class: 'v-room' },
+    h('button', { class: 'btn ghost v-room-close', id: 'v-room-close', type: 'button', onclick: closeRoom }, '닫기 ✕'),
+    h('p', { class: 'v-room-msg', id: 'v-room-msg' }, text)));
+}
+
+function paintRoom({ house, slots, pick }, first) {
+  const shown = slots.filter(Boolean);
+  roomEl.replaceChildren(h('div', { class: 'v-room' },
+    h('button', { class: 'btn ghost v-room-close', id: 'v-room-close', type: 'button', onclick: closeRoom }, '닫기 ✕'),
+    h('h2', { id: 'v-room-title' }, `${house.nick}의 집`),
+    h('div', { class: 'v-room-body' },
+      h('div', { class: 'v-room-house' },
+        h('div', { class: 'scene', html: houseSVG(house.stage.key, house.equipped) }),
+        h('strong', { id: 'v-room-stage' }, house.stage.name),
+        pick
+          ? h('div', { class: 'v-room-pick', id: 'v-room-pick' },
+            h('div', { class: 'muted' }, `📌 ${house.nick}의 pick 문장`),
+            h('p', { class: 'sentence-text' }, pick.text),
+            h('p', { class: 'muted' }, `《${pick.bookTitle}》 ${pick.page}쪽`))
+          : null),
+      h('div', { class: 'v-room-side' },
+        h('h3', {}, '전시 칸'),
+        shown.length
+          ? h('div', { class: 'v-room-slots', id: 'v-room-slots' }, shown.map((item) => h('div', { class: 'v-slot' }, itemEl(item, { mini: true }))))
+          : h('p', { class: 'muted', id: 'v-room-empty' }, '아직 전시한 것이 없어요.')))));
+  if (first) roomEl.querySelector('#v-room-close')?.focus();
+}
+
+/** 열려 있는 집을 불러온다. 내용이 그대로면 다시 그리지 않는다(사진이 깜박이지 않게). */
+async function loadRoom(first = false) {
+  const id = roomId; const token = savedToken();
+  if (!id || !token) return;
+  try {
+    const d = await api('village/house', { studentId: id }, token);
+    if (roomId !== id) return; // 그 사이 닫았거나 다른 집을 열었다
+    const sig = JSON.stringify(d);
+    if (sig === roomSig) return;
+    roomSig = sig;
+    paintRoom(d, first);
+  } catch (e) {
+    if (roomId !== id) return;
+    if (e.status === 404) roomMessage('이 학생의 집을 찾을 수 없어요.');
+    else if (first) roomMessage('집을 불러오지 못했어요. 닫고 다시 눌러 주세요.');
+  }
+}
+
+function openRoom(id, nick) {
+  closeRoom();
+  roomId = id;
+  roomEl = h('div', { class: 'v-room-back', id: 'v-room-back', role: 'dialog', 'aria-modal': 'true', 'aria-label': `${nick}의 집` });
+  roomEl.addEventListener('click', (ev) => { if (ev.target === roomEl) closeRoom(); }); // 바깥을 누르면 닫힘
+  document.body.append(roomEl);
+  roomMessage('집으로 가는 중…');
+  loadRoom(true);
+}
+
+const houseOf = (ev) => ev.target.closest?.('.v-house');
+root.addEventListener('click', (ev) => {
+  const el = houseOf(ev);
+  if (el) openRoom(el.dataset.house, el.querySelector('.nick')?.textContent || '');
+});
+root.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Enter' && ev.key !== ' ') return;
+  const el = houseOf(ev);
+  if (!el) return;
+  ev.preventDefault();
+  openRoom(el.dataset.house, el.querySelector('.nick')?.textContent || '');
+});
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && roomEl) closeRoom(); });
 
 start();

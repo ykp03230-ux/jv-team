@@ -25,7 +25,9 @@ body.tv { height: 100vh; overflow: hidden; font-size: clamp(16px, 1.3vw, 34px); 
 .v-building.new { animation: pop 1.2s ease 3; }
 
 .v-houses { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); grid-template-rows: repeat(var(--rows, 4), minmax(0, 1fr)); gap: 0.4vh 1vw; padding: 0.8vh 1vw; border: 3px solid var(--color-ink); border-radius: var(--radius); background: var(--color-surface); }
-.v-house { display: flex; flex-direction: column; text-align: center; min-width: 0; min-height: 0; }
+.v-house { display: flex; flex-direction: column; text-align: center; min-width: 0; min-height: 0; cursor: pointer; border-radius: var(--radius); transition: background 0.15s ease; }
+.v-house:hover, .v-house:focus-visible { background: color-mix(in srgb, var(--color-accent) 10%, transparent); outline: none; }
+.v-house:active { background: color-mix(in srgb, var(--color-accent) 20%, transparent); }
 .v-house > div:first-child { flex: 1; min-height: 0; }
 .v-house svg { width: 100%; height: 100%; }
 .v-house .nick { font-size: clamp(14px, 1.25vw, 32px); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -40,6 +42,30 @@ body.tv { height: 100vh; overflow: hidden; font-size: clamp(16px, 1.3vw, 34px); 
   box-shadow: 0 1.2vw 3vw rgba(30, 27, 24, 0.4);
   animation: banner-in 0.5s ease;
 }
+/* 학생 집 구경 창: 집을 누르면 뜨는 큰 창. 소식 배너(z-index 90)보다 아래에 둔다. */
+.v-room-back { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 3vh 3vw; background: color-mix(in srgb, var(--color-ink) 62%, transparent); animation: room-in 0.2s ease; }
+.v-room { position: relative; width: min(100%, 94vw); max-height: 94vh; overflow: auto; padding: 2.6vh 2.6vw 3vh; background: var(--color-surface); border: 4px solid var(--color-ink); border-radius: 24px; box-shadow: 0 1.2vw 3vw rgba(30, 27, 24, 0.4); }
+.v-room h2 { font-size: clamp(28px, 3.4vw, 84px); line-height: 1.1; margin: 0 0 1.6vh; padding-right: 12vw; }
+.v-room h3 { font-size: clamp(20px, 2vw, 50px); margin: 0 0 1vh; }
+.v-room .muted { font-size: clamp(14px, 1.2vw, 30px); }
+.v-room-close { position: absolute; top: 2vh; right: 2vw; width: auto; min-height: 0; padding: 0.8vh 1.4vw; font-size: clamp(16px, 1.5vw, 38px); }
+.v-room-msg { font-size: clamp(20px, 2vw, 50px); padding: 4vh 0; text-align: center; }
+.v-room-body { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: 2.4vw; align-items: start; }
+.v-room-house { text-align: center; }
+.v-room-house .scene svg { display: block; width: 100%; height: auto; max-height: 40vh; }
+.v-room-house strong { display: block; margin: 0.6vh 0 1.4vh; font-family: var(--font-title); font-size: clamp(22px, 2.4vw, 60px); font-weight: 400; }
+.v-room-pick { padding: 1.2vh 1.2vw; border: 3px solid var(--color-ink); border-radius: var(--radius); background: var(--color-bg); text-align: left; }
+.v-room-pick .sentence-text { margin: 0.5vh 0; font-family: var(--font-title); font-size: clamp(18px, 1.9vw, 48px); line-height: 1.45; word-break: keep-all; overflow-wrap: anywhere; }
+.v-room-slots { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1vw; }
+.v-slot { padding: 1vh 0.8vw; border: 2px solid var(--color-ink); border-radius: var(--radius); background: var(--color-bg); min-width: 0; }
+/* 전시 칸 안의 카드는 앱 화면용 작은 글자 크기를 TV 크기로 키운다 */
+.v-room .item.mini { font-size: clamp(14px, 1.15vw, 30px); }
+.v-room .item.mini .it-text { -webkit-line-clamp: 6; }
+.v-room .item.mini .muted { font-size: clamp(12px, 0.95vw, 24px); }
+.v-room .mini .bm { max-width: min(100%, 6vw); padding: 0.8vh 0.4vw; aspect-ratio: 1 / 1.8; }
+.v-room .mini .bm-text { font-size: clamp(11px, 0.85vw, 20px); }
+.v-room .mini .photo { max-height: 18vh; }
+@keyframes room-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes banner-in { from { opacity: 0; transform: translate(-50%, -30%) scale(0.9); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
 @keyframes pop { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
 
@@ -52,4 +78,8 @@ body.tv { height: 100vh; overflow: hidden; font-size: clamp(16px, 1.3vw, 34px); 
   .v-building svg { height: auto; }
   .v-houses { grid-template-columns: repeat(3, 1fr); grid-template-rows: none; }
   .v-house svg { height: auto; }
+  .v-room-body { grid-template-columns: 1fr; }
+  .v-room-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .v-room .mini .bm { max-width: 120px; }
+  .v-room h2 { padding-right: 90px; }
 }
