@@ -1,0 +1,15 @@
+{
+  "name": "textopia",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./public",
+    "run_worker_first": ["/api/*"]
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "CLASSROOM", "class_name": "Classroom" }]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Classroom"] }
+  ]
+}

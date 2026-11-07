@@ -1,0 +1,64 @@
+/* TEXTOPIA 테마: 색, 글꼴, 여백은 이 파일의 변수 한 곳에서만 바꾼다. (임시 톤 — 디자인은 나중에 확정) */
+@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Song+Myung&display=swap');
+
+:root {
+  /* 색 */
+  --color-bg: #F3EBDD;          /* 한지 바탕 */
+  --color-ink: #1E1B18;         /* 먹색 글자 */
+  --color-accent: #B5452B;      /* 주홍 (포인트 색 하나) */
+  --color-accent-ink: #FFFFFF;  /* 포인트 색 위의 글자 */
+  --color-surface: #FBF6EC;     /* 카드 바탕 */
+  --color-line: #CDBFA5;        /* 테두리 */
+  --color-muted: #6E655A;       /* 보조 글자 */
+
+  /* 그림용 색 (집·캐릭터·표지를 CSS/SVG로 그릴 때만 쓴다) */
+  --art-earth: #D8C3A0;
+  --art-earth-dark: #B89A74;
+  --art-wood: #8A5A3C;
+  --art-thatch: #C9A66B;
+  --art-thatch-dark: #A58247;
+  --art-tile: #3A3F47;
+  --art-tile-light: #5A616B;
+  --art-stone: #B1AAA0;
+  --art-grass: #9DB17C;
+  --art-paper: #FFFDF6;
+  --art-water: #9CC3CE;
+  --art-skin: #F2D2B1;
+  --art-hair: #1E1B18;
+  --cover-1: #C9B79A; --cover-2: #A9B79B; --cover-3: #B7A5A0;
+  --cover-4: #9FB0B8; --cover-5: #C8B27E; --cover-6: #B39CB4;
+
+  /* 글꼴 */
+  --font-title: 'Song Myung', 'Gowun Batang', serif;
+  --font-body: 'Gowun Batang', 'Batang', serif;
+  --font-size-base: 17px;
+
+  /* 여백·크기 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius: 10px;
+  --tap-size: 48px;             /* 손가락으로 누르기 쉬운 버튼 높이 */
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--font-size-base);
+  line-height: 1.55;
+}
+
+h1, h2, h3 { font-family: var(--font-title); font-weight: 400; margin: 0; }
+
+.blank {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+.blank h1 { font-size: 40px; letter-spacing: 0.08em; color: var(--color-accent); }
