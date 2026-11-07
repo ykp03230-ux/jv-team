@@ -1,0 +1,305 @@
+{
+  "project": "TEXTOPIA",
+  "version": "v02",
+  "created": "2026-11-07",
+  "generation_tool": "built-in image_gen",
+  "camera": {
+    "type": "fixed orthographic 2.5D",
+    "target_azimuth_degrees": 45,
+    "target_elevation_degrees": 35,
+    "lighting": "upper-left",
+    "notes": "통일된 시각 기준으로 생성한 PNG입니다. 수치가 보장된 3D 렌더 패스는 아닙니다."
+  },
+  "map": {
+    "file": "maps/map-ground.png",
+    "width": 1536,
+    "height": 1024,
+    "tileable": false
+  },
+  "arrangement_reference": "previews/map-arrangement-reference.png",
+  "sprites": [
+    {
+      "id": "book-house-sage",
+      "label": "초록 책집",
+      "suggestedVisibleWidth": 200,
+      "file": "sprites/houses/book-house-sage.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        177,
+        113,
+        1079,
+        1132
+      ],
+      "anchorNormalized": [
+        0.500797,
+        0.902711
+      ],
+      "suggestedCanvasWidth": 278.05
+    },
+    {
+      "id": "book-house-terracotta",
+      "label": "테라코타 책집",
+      "suggestedVisibleWidth": 200,
+      "file": "sprites/houses/book-house-terracotta.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        176,
+        112,
+        1080,
+        1135
+      ],
+      "anchorNormalized": [
+        0.500797,
+        0.905104
+      ],
+      "suggestedCanvasWidth": 277.43
+    },
+    {
+      "id": "book-house-blue",
+      "label": "파랑 책집",
+      "suggestedVisibleWidth": 200,
+      "file": "sprites/houses/book-house-blue.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        176,
+        112,
+        1080,
+        1135
+      ],
+      "anchorNormalized": [
+        0.500797,
+        0.905104
+      ],
+      "suggestedCanvasWidth": 277.43
+    },
+    {
+      "id": "sentence-frame",
+      "label": "문장 전시대",
+      "suggestedVisibleWidth": 65,
+      "file": "sprites/props/sentence-frame.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        339,
+        130,
+        873,
+        1152
+      ],
+      "anchorNormalized": [
+        0.483254,
+        0.91866
+      ],
+      "suggestedCanvasWidth": 152.64
+    },
+    {
+      "id": "reading-bench",
+      "label": "독서 벤치",
+      "suggestedVisibleWidth": 130,
+      "file": "sprites/props/reading-bench.png",
+      "sourceSize": [
+        1312,
+        1199
+      ],
+      "alphaBounds": [
+        158,
+        128,
+        1113,
+        1071
+      ],
+      "anchorNormalized": [
+        0.484375,
+        0.893244
+      ],
+      "suggestedCanvasWidth": 178.6
+    },
+    {
+      "id": "reading-tree",
+      "label": "독서 나무",
+      "suggestedVisibleWidth": 190,
+      "file": "sprites/nature/reading-tree.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        158,
+        174,
+        1097,
+        1086
+      ],
+      "anchorNormalized": [
+        0.500399,
+        0.866029
+      ],
+      "suggestedCanvasWidth": 253.74
+    },
+    {
+      "id": "garden-shrub",
+      "label": "정원 관목",
+      "suggestedVisibleWidth": 55,
+      "file": "sprites/nature/garden-shrub.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        230,
+        288,
+        1025,
+        965
+      ],
+      "anchorNormalized": [
+        0.500399,
+        0.769537
+      ],
+      "suggestedCanvasWidth": 86.75
+    },
+    {
+      "id": "flower-patch",
+      "label": "꽃 무리",
+      "suggestedVisibleWidth": 40,
+      "file": "sprites/nature/flower-patch.png",
+      "sourceSize": [
+        1254,
+        1254
+      ],
+      "alphaBounds": [
+        194,
+        267,
+        1034,
+        1001
+      ],
+      "anchorNormalized": [
+        0.489633,
+        0.798246
+      ],
+      "suggestedCanvasWidth": 59.71
+    }
+  ],
+  "placement_units": "pixels on 1536 x 1024 map; x/y is the recommended alpha-bounds bottom-center anchor",
+  "placements": [
+    {
+      "id": "home-1",
+      "sprite": "book-house-terracotta",
+      "x": 380,
+      "y": 345
+    },
+    {
+      "id": "home-2",
+      "sprite": "book-house-sage",
+      "x": 650,
+      "y": 735
+    },
+    {
+      "id": "home-3",
+      "sprite": "book-house-blue",
+      "x": 1070,
+      "y": 525
+    },
+    {
+      "id": "quote-1",
+      "sprite": "sentence-frame",
+      "x": 790,
+      "y": 730
+    },
+    {
+      "id": "tree-1",
+      "sprite": "reading-tree",
+      "x": 780,
+      "y": 295
+    },
+    {
+      "id": "bench-1",
+      "sprite": "reading-bench",
+      "x": 890,
+      "y": 335
+    },
+    {
+      "id": "tree-2",
+      "sprite": "reading-tree",
+      "x": 175,
+      "y": 150,
+      "visibleWidth": 150
+    },
+    {
+      "id": "tree-3",
+      "sprite": "reading-tree",
+      "x": 445,
+      "y": 120,
+      "visibleWidth": 125
+    },
+    {
+      "id": "tree-4",
+      "sprite": "reading-tree",
+      "x": 980,
+      "y": 115,
+      "visibleWidth": 140
+    },
+    {
+      "id": "tree-5",
+      "sprite": "reading-tree",
+      "x": 90,
+      "y": 335,
+      "visibleWidth": 145
+    },
+    {
+      "id": "tree-6",
+      "sprite": "reading-tree",
+      "x": 1420,
+      "y": 870,
+      "visibleWidth": 170
+    },
+    {
+      "id": "shrub-1",
+      "sprite": "garden-shrub",
+      "x": 467,
+      "y": 334
+    },
+    {
+      "id": "shrub-2",
+      "sprite": "garden-shrub",
+      "x": 1155,
+      "y": 515
+    },
+    {
+      "id": "shrub-3",
+      "sprite": "garden-shrub",
+      "x": 1375,
+      "y": 865
+    },
+    {
+      "id": "flowers-1",
+      "sprite": "flower-patch",
+      "x": 295,
+      "y": 335
+    },
+    {
+      "id": "flowers-2",
+      "sprite": "flower-patch",
+      "x": 561,
+      "y": 726
+    },
+    {
+      "id": "flowers-3",
+      "sprite": "flower-patch",
+      "x": 978,
+      "y": 517
+    }
+  ],
+  "notes": [
+    "좌표는 배치 시작점 예시이며 참고 이미지와 픽셀 단위로 동일한 합성을 보장하지 않습니다.",
+    "진행 방향과 그림자 방향을 유지하려면 에셋을 임의로 뒤집거나 회전하지 않는 편을 권장합니다.",
+    "원본은 리사이즈·크롭 없이 보존했습니다. 표시 크기와 위치는 메타데이터로 조절합니다."
+  ]
+}

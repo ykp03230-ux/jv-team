@@ -49,3 +49,7 @@ Desktop.ini
 *.swp
 *.swo
 *~
+
+# Local design exports and review scratch files
+/output/
+/tmp/
