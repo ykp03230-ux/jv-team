@@ -3,6 +3,7 @@ import { h, once, toast } from '../ui.js';
 import { houseSVG } from '../art.js';
 import { S, call, go, toastReward } from './core.js';
 import { itemEl } from './items.js';
+import { zoomable } from './zoom.js';
 
 export async function renderFriends(el, friendId) {
   if (friendId) return renderRoom(el, friendId);
@@ -63,8 +64,11 @@ async function renderRoom(el, friendId) {
     h('div', { class: 'card house-card' }, h('div', { class: 'scene', html: houseSVG(f.stage.key, f.equipped) }), h('strong', {}, f.stage.name)),
     pickBox,
     h('h3', { style: 'margin-top:16px' }, '전시 칸'),
-    shown.length ? h('div', { class: 'slots', id: 'friend-slots' }, room.slots.map((item) =>
-      h('div', { class: 'slot' + (item ? ' filled' : '') }, item ? itemEl(item, { mini: true }) : h('span', { class: 'plus' }, '·')))) : h('p', { class: 'muted' }, '아직 전시한 것이 없어요.'),
+    shown.length ? h('div', { class: 'slots', id: 'friend-slots' }, room.slots.map((item) => {
+      const slot = h('div', { class: 'slot' + (item ? ' filled' : '') }, item ? itemEl(item, { mini: true }) : h('span', { class: 'plus' }, '·'));
+      return item ? zoomable(slot, item) : slot; // 걸린 작품은 누르면 크게 보인다
+    })) : h('p', { class: 'muted' }, '아직 전시한 것이 없어요.'),
+    shown.length ? h('p', { class: 'muted' }, '작품을 누르면 크게 볼 수 있어요.') : null,
     room.guestbook.length ? h('div', { class: 'card', id: 'friend-guestbook' }, h('h3', {}, '다녀간 친구'), room.guestbook.map((g) => h('p', { class: 'muted' }, `${g.nick}이(가) 다녀감 · ${g.date}`))) : null,
   );
 }

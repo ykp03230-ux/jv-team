@@ -4,6 +4,7 @@ import { api, teacherSession, studentSession } from './api.js';
 import { h, mount, once, fmt } from './ui.js';
 import { houseSVG, buildingSVG } from './art.js';
 import { itemEl, setImageRenderer } from './student/items.js';
+import { zoomable, closeZoom } from './student/zoom.js';
 
 export const REFRESH_MS = 10000; // 10초
 const root = document.getElementById('app');
@@ -140,6 +141,7 @@ let roomId = null;
 let roomSig = '';
 
 function closeRoom() {
+  closeZoom(); // 크게 보던 작품이 있으면 함께 닫는다
   roomEl?.remove();
   roomEl = null; roomId = null; roomSig = '';
 }
@@ -152,7 +154,7 @@ function roomMessage(text) {
 
 function paintRoom({ house, slots, pick }, first) {
   const shown = slots.filter(Boolean);
-  roomEl.replaceChildren(h('div', { class: 'v-room' },
+  roomEl.replaceChildren(h('div', { class: 'v-room', tabindex: '-1' },
     h('button', { class: 'btn ghost v-room-close', id: 'v-room-close', type: 'button', onclick: closeRoom }, '닫기 ✕'),
     h('h2', { id: 'v-room-title' }, `${house.nick}의 집`),
     h('div', { class: 'v-room-body' },
@@ -168,9 +170,10 @@ function paintRoom({ house, slots, pick }, first) {
       h('div', { class: 'v-room-side' },
         h('h3', {}, '전시 칸'),
         shown.length
-          ? h('div', { class: 'v-room-slots', id: 'v-room-slots' }, shown.map((item) => h('div', { class: 'v-slot' }, itemEl(item, { mini: true }))))
-          : h('p', { class: 'muted', id: 'v-room-empty' }, '아직 전시한 것이 없어요.')))));
-  if (first) roomEl.querySelector('#v-room-close')?.focus();
+          ? h('div', { class: 'v-room-slots', id: 'v-room-slots' }, shown.map((item) => zoomable(h('div', { class: 'v-slot' }, itemEl(item, { mini: true })), item)))
+          : h('p', { class: 'muted', id: 'v-room-empty' }, '아직 전시한 것이 없어요.'),
+        shown.length ? h('p', { class: 'muted v-room-hint' }, '작품을 누르면 크게 볼 수 있어요.') : null))));
+  if (first) roomEl.querySelector('.v-room')?.focus(); // 창에 둔다(스페이스로 열었을 때 같은 키가 닫기 버튼을 눌러 버리지 않게)
 }
 
 /** 열려 있는 집을 불러온다. 내용이 그대로면 다시 그리지 않는다(사진이 깜박이지 않게). */
