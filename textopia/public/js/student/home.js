@@ -1,13 +1,12 @@
-// 홈: 책집으로 표현하는 독서마을과 오늘의 독서 활동
+// 홈: 내 상태와 오늘의 퀘스트 3개
 import { h, once, fmt } from '../ui.js';
 import { S, call, go, toastReward } from './core.js';
-import { loadReadingVillage } from './reading-village.js';
+import { houseCard } from './house.js';
 
 export async function renderHome(el) {
   const me = S.me;
   const q = me.quests;
   const cap = Math.min(100, (me.todayCoins / me.coinCap) * 100);
-  const village = h('section', { id: 'reading-village', 'aria-label': '나의 독서마을' });
 
   // ② 책 읽기 체크 (읽은 책 + 오늘 읽은 쪽)
   const readBox = h('div', { class: 'stack' });
@@ -32,13 +31,11 @@ export async function renderHome(el) {
   }
 
   el.replaceChildren(
-    h('header', { class: 'rv-heading' },
-      h('div', {}, h('p', { class: 'rv-eyebrow' }, 'TEXTOPIA · 나의 취향이 자라는 곳'),
-        h('h2', { id: 'who' }, `${me.nick}의 독서마을`),
-        h('p', { class: 'rv-subtitle' }, '책 한 권은 작은 집이 되고, 좋아한 문장은 풍경이 돼요.')),
-      h('button', { class: 'btn ghost small', onclick: () => go('friends') }, '친구의 서재 구경하기 →')),
-    village,
-    h('details', { class: 'rv-activities' }, h('summary', {}, '오늘의 독서 활동과 성장 기록'),
+    h('div', { class: 'row between' },
+      h('h2', { id: 'who' }, `${me.nick}의 마을`),
+      h('span', { class: 'pill' }, me.stage.name)),
+    houseCard(me),
+    h('button', { class: 'btn ghost block', id: 'go-shop', style: 'margin-top:8px', onclick: () => go('shop') }, '🏮 장터 가기'),
     h('div', { class: 'card stats', style: 'margin-top:12px' },
       h('div', {}, h('div', { class: 'num', id: 'coins' }, fmt(me.coins)), h('div', { class: 'lab' }, '코인')),
       h('div', {}, h('div', { class: 'num', id: 'exp' }, fmt(me.exp)), h('div', { class: 'lab' }, 'EXP')),
@@ -55,9 +52,7 @@ export async function renderHome(el) {
       h('div', { class: 'row between' }, h('strong', {}, '오늘 받은 코인'), h('span', { id: 'today-coins' }, `${me.todayCoins} / ${me.coinCap}`)),
       h('div', { class: 'bar' }, h('i', { style: `width:${cap}%` })),
     ),
-    h('button', { class: 'btn ghost block', id: 'go-shop', style: 'margin-top:12px', onclick: () => go('shop') }, '장터 가기')),
   );
-  loadReadingVillage(village);
 }
 
 function quest(done, title, sub, action) {
